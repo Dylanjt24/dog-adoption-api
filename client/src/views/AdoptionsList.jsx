@@ -4,15 +4,16 @@ import { Link } from 'react-router-dom';
 const AdoptionsList = () => {
     const [accessToken, setAccessToken] = useState(null);
     const [results, setResults] = useState(null);
+    const [zipCode, setZipCode] = useState();
     const petFinderKey = process.env.REACT_APP_PET_FINDER_KEY;
-    const petFinderSecret = process.env.REACT_APP_PET_FINDER_SECRET; //dwd
+    const petFinderSecret = process.env.REACT_APP_PET_FINDER_SECRET;
 
     useEffect(() => {
         const fetchAccessToken = async () => {
             const params = new URLSearchParams();
             params.append("grant_type", "client_credentials");
             params.append("client_id", petFinderKey); //dw
-            params.append("client_secret", petFinderSecret); //ds
+            params.append("client_secret", petFinderSecret);
             const petfinderRes = await fetch(
                 "https://api.petfinder.com/v2/oauth2/token",
                 {
@@ -23,19 +24,35 @@ const AdoptionsList = () => {
             const json = (await petfinderRes.json());
             setAccessToken(json.access_token);
         };
-        const fetchPets = async () => {
-                const petResults = await fetch("https://api.petfinder.com/v2/animals?type=dog", {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                });
-                const json = await petResults.json();
-                setResults(json.animals);
-                console.log(results);
-        }
+        // const fetchPets = async () => {
+        //         const petResults = await fetch("https://api.petfinder.com/v2/animals?type=dog&limit=99", {
+        //             headers: {
+        //                 Authorization: `Bearer ${accessToken}`
+        //             }
+        //         });
+        //         const json = await petResults.json();
+        //         setResults(json.animals);
+        //         console.log(results);
+        // }
         fetchAccessToken();
-        fetchPets();
+        // fetchPets();
     }, []);
+
+    const handleSubmit = (e) =>{
+        e.preventDefault()
+        const fetchZip = async () => {
+            const petResults = await fetch(`https://api.petfinder.com/v2/animals?type=dog&location=${zipCode}&limit=99`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            });
+            const json = await petResults.json();
+            setResults(json.animals);
+            console.log(results);
+        }
+        fetchZip();
+        setZipCode("");
+    }
 
     return (
         <div className="container text-center">
@@ -62,6 +79,12 @@ const AdoptionsList = () => {
                     <h1 className="display-5 fw-bold">Find Your New Best Friend</h1>
                 </div>
             </div>
+            <form onSubmit={handleSubmit} className="mb-4">
+                <div className="form-group">
+                    <input type="text" name="zipCode" onChange={e => setZipCode(e.target.value)} value={zipCode} placeholder="Search by zip code" className="form-control" />
+                    <button className="btn btn-primary ms-3 mt-2">Search</button>
+                </div>
+            </form>
             {
                 results ?
                     <div className="row m-auto">
